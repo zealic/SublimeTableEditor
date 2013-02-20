@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # tablelib.py - pretty print text table.
 
 # Copyright (C) 2012  Free Software Foundation, Inc.
@@ -22,6 +23,7 @@
 # along with SublimeTableEditor.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import widechar_support
 
 
 class TableSyntax:
@@ -153,18 +155,19 @@ class DataColumn(Column):
 
     def min_len(self):
         # min of '   ' or ' xxxx '
-        return max(3, len(self.data) + 2)
+        return max(3, widechar_support.wlen(self.data) + 2)
 
     def new_empty_column(self):
         return DataColumn(self.row,'')
 
     def render(self):
+        col_aign_len = self.col_len - widechar_support.get_count(self.data)
         if self.align == Column.ALIGN_RIGHT:
-            return ' ' + self.data.rjust(self.col_len - 2, ' ') + ' '
+            return ' ' + self.data.rjust(col_aign_len - 2, ' ') + ' '
         elif self.align == Column.ALIGN_LEFT:
-            return ' ' + self.data.ljust(self.col_len - 2, ' ') + ' '
+            return ' ' + self.data.ljust(col_aign_len - 2, ' ') + ' '
         elif self.align == Column.ALIGN_CENTER:
-            return ' ' + self.data.center(self.col_len - 2, ' ') + ' '
+            return ' ' + self.data.center(col_aign_len - 2, ' ') + ' '
         else:
             raise AssertionError
 
@@ -475,3 +478,15 @@ if __name__ == '__main__':
     syntax.auto_detect_alignment = False
     #syntax.keep_spaces_left = True
     print "Table:\n", format_to_text(raw_text, syntax)
+
+    raw_wide_text = u"""| header 1 | header 2 |header 3 | header 4 |
+              |- |
+              | Hello World! | b   | c | 1234567890 |
+              | 你好，世界！ |   2   | 3 |4 |
+              | こんにちは世界! |   4 | | |
+              |-"""
+    syntax = multi_markdown_syntax
+    syntax.custom_column_alignment = True
+    syntax.auto_detect_alignment = False
+    #syntax.keep_spaces_left = True
+    print "Table with Wide Characters:\n", format_to_text(raw_wide_text, syntax)

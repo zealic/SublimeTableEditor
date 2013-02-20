@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # table_plugin_test.py - sublime plugin with integration tests
 
 # Copyright (C) 2012  Free Software Foundation, Inc.
@@ -336,6 +337,45 @@ class CustomAlignTest(CallbackTest):
 |          |          |          |""".format(self.description)
 
 
+class WideCharactersTest(CallbackTest):
+
+    def __init__(self):
+        CallbackTest.__init__(self, u"Wide chatacters test")
+        self.commands.append(CommandDef("select_all"))
+        self.commands.append(CommandDef("cut"))
+        self.commands.append(CommandDef("insert", {"characters": self.description}))
+        self.commands.append(CommandDef("insert", {"characters": """
+| column A | column B | column C |
+|-"""}))
+        self.commands.append(CommandDef("table_editor_next_field"))
+        self.commands.append(CommandDef("insert", {"characters": u"这家伙"}))
+        self.commands.append(CommandDef("table_editor_next_field"))
+        self.commands.append(CommandDef("insert", {"characters": u"真的"}))
+        self.commands.append(CommandDef("table_editor_next_field"))
+        self.commands.append(CommandDef("insert", {"characters": u"棒极了！"}))
+        self.commands.append(CommandDef("table_editor_next_field"))
+        self.commands.append(CommandDef("insert", {"characters": u"この男"}))
+        self.commands.append(CommandDef("table_editor_next_field"))
+        self.commands.append(CommandDef("insert", {"characters": u"本当に"}))
+        self.commands.append(CommandDef("table_editor_next_field"))
+        self.commands.append(CommandDef("insert", {"characters": u"素晴らしいです!"}))
+        self.commands.append(CommandDef("table_editor_previous_field"))
+
+    @property
+    def description(self):
+        return u"""Test: {0}
+- create table with wide chatacters
+- navigate with tab key
+""".format(self.name)
+
+    def expected_value(self):
+        return u"""{0}
+| column A | column B |     column C    |
+|----------|----------|-----------------|
+| 这家伙   | 真的     | 棒极了！        |
+| この男   | 本当に   | 素晴らしいです! |""".format(self.description)
+
+
 class TableEditorTestSuite(sublime_plugin.TextCommand):
     COMMAND_TIMEOUT = 250
     TEST_TIMEOUT = 500
@@ -352,6 +392,7 @@ class TableEditorTestSuite(sublime_plugin.TextCommand):
         tests.append(RowsTest())
         tests.append(LongRowsTest())
         tests.append(CustomAlignTest())
+        tests.append(WideCharactersTest())
         self.run_tests(tests, 0, 0)
 
     def run_tests(self, tests, test_ind, command_ind):
@@ -375,7 +416,7 @@ Click ctrl+w to close this window""".format(len(tests))})
             text = self.get_buffer_text()
             if text != tests[test_ind].expected_value():
                 self.view.run_command("move_to", {"extend": False, "to": "eof"})
-                self.view.run_command("insert", {"characters": """
+                self.view.run_command("insert", {"characters": u"""
 Test {0} failed:
 Expected:
 {1}<<<
